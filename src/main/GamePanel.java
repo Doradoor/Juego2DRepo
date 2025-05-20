@@ -6,6 +6,9 @@ import inputs.MouseInputs;
 import javax.swing.*;
 import java.awt.*;
 
+import static main.Game.GAME_HEIGHT;
+import static main.Game.GAME_WIDTH;
+
 
 /** JPanel nos va a permitir dibujar en la pantalla del juego y es parte de JFrame
  *
@@ -30,8 +33,9 @@ public class GamePanel extends JPanel{
      * Las imagenes sera 32 px x 32 px para que nada se salga del borde
      */
     private void setPanelSize() {
-        Dimension size = new Dimension(1280, 800);
+        Dimension size = new Dimension(GAME_WIDTH, GAME_HEIGHT);
         setPreferredSize(size);
+
     }
 
     public void updateGame(){

@@ -1,5 +1,7 @@
 package entities;
 
+import utilz.LoadSave;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -15,12 +17,12 @@ public class Player extends Entity {
     private BufferedImage[][] animations;
     private int aniTick, aniIndex, aniSpeed = 30;
     private int playerAction = IDLE;
-    private boolean moving = false;
+    private boolean moving = false, attacking = false;
     private boolean left, up, right, down;
     private float playerSpeed = 2.0f;
 
-    public Player(float x, float y) {
-        super(x, y);
+    public Player(float x, float y, int width, int height) {
+        super(x, y, width, height);
         loadAnimations();
     }
 
@@ -28,7 +30,8 @@ public class Player extends Entity {
      * Metodo para actualizar jugador
      * updatePos hara que inicie Moving por default en false
      * setAnimation revisa si moving es o no true.
-     */    public void update() {
+     */
+    public void update() {
         updatePos();
         updateAnimationTick();
         setAnimation();
@@ -41,7 +44,7 @@ public class Player extends Entity {
      * Jpanel le indicara a Graphics donde puede dibujar
      */
     public void render(Graphics g) {
-        g.drawImage(animations[playerAction][aniIndex], (int) x, (int) y, 256,160,null);
+        g.drawImage(animations[playerAction][aniIndex], (int) x, (int) y, width,height,null);
 
     }
 
@@ -56,16 +59,28 @@ public class Player extends Entity {
             aniIndex++;
             if (aniIndex >= GetSpriteCount(playerAction)) { //si es mas grande que el tamaño del array de animacion se resetea y tmb dependiendo de la acccion del jugador obtenemos una cantidad de index
                 aniIndex = 0;
+                attacking = false;
             }
         }
     }
 
     //Si nos estamos moviendo entonces se toma como running, si no como Idle
     private void setAnimation() {
+        int startAni = playerAction;
         if(moving)
             playerAction = RUNNING;
         else
             playerAction = IDLE;
+        if(attacking)
+            playerAction = ATTACK_1;
+        if(startAni != playerAction)
+            resetAniTick();
+    }
+
+    //metodo para resetear la animacion
+    private void resetAniTick() {
+        aniTick = 0;
+        aniIndex = 0;
     }
 
     /**
@@ -93,33 +108,30 @@ public class Player extends Entity {
 
     }
 
-    /** Este metodo va a obtener la imagen y asignarla a img.
-     * dos try catch, uno usa close() para liberar recursos y evitar problemas
-     * Luego carga las frames a un array para hacer la animacion en un ciclo
+    /** Este metodo va a obtener la imagen del jugador desde loadsave y cargarla animaciones
      */
     private void loadAnimations() {
-
-        InputStream is = getClass().getResourceAsStream("/player_sprites.png");
-        try {
-            BufferedImage img = ImageIO.read(is);
+            BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
             animations = new BufferedImage[9][6];
             for (int j = 0; j < animations.length; j++)
                 for (int i = 0; i < animations[j].length; i++)
                     animations[j][i] = img.getSubimage(i * 64, j* 40, 64, 40);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try{
-                is.close();
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-
-
 
         }
 
+
+
+
+
+    public void resetDirBooleans(){
+        left = false;
+        up = false;
+        right = false;
+        down = false;
+    }
+    public void setAttacking(boolean attacking){
+        this.attacking = attacking;
+    }
 
     public boolean isLeft() {
         return left;
