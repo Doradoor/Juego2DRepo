@@ -1,17 +1,13 @@
 package entities;
 
+import main.Game;
 import utilz.LoadSave;
 
-import javax.imageio.ImageIO;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static utilz.Constants.Directions.*;
-import static utilz.Constants.Directions.DOWN;
 import static utilz.Constants.PlayerConstants.*;
-
+import static utilz.HelpMethods.CanMoveHere;
 public class Player extends Entity {
 
     private BufferedImage[][] animations;
@@ -20,10 +16,14 @@ public class Player extends Entity {
     private boolean moving = false, attacking = false;
     private boolean left, up, right, down;
     private float playerSpeed = 2.0f;
+    private int[][] lvlData;
+    private float xDrawOffset = 21 * Game.SCALE;
+    private float yDrawOffset = 4 * Game.SCALE;
 
     public Player(float x, float y, int width, int height) {
         super(x, y, width, height);
         loadAnimations();
+        initHitbox(x, y, 20 * Game.SCALE, 28 * Game.SCALE);
     }
 
     /**
@@ -33,6 +33,7 @@ public class Player extends Entity {
      */
     public void update() {
         updatePos();
+      //  updateHitbox();
         updateAnimationTick();
         setAnimation();
     }
@@ -44,15 +45,21 @@ public class Player extends Entity {
      * Jpanel le indicara a Graphics donde puede dibujar
      */
     public void render(Graphics g) {
-        g.drawImage(animations[playerAction][aniIndex], (int) x, (int) y, width,height,null);
-
+        g.drawImage(animations[playerAction][aniIndex], (int)(hitbox.x - xDrawOffset) , (int)(hitbox.y - yDrawOffset), width,height,null);
+        drawHitbox(g);
     }
 
 
 
-
+    /**
+     * Este metodo maneja la animacion del player para que las animaciones sean fluidas
+     * Anitick es para el tiempo acumulado antes de un cambio de frame
+     * aniSpeed la velocidad antes de cambiar al siguiente fram
+     * aniIndex fotograma dentro de la animaicion (El sprite esta en un array por cual se va desplazando)
+     * playerAction para determinar cual conjunto usar
+     * getsprite va a devolver el numero de fotogramas para la accion que realiza
+     */
     private void updateAnimationTick() {
-
         aniTick++;
         if (aniTick >= aniSpeed) {
             aniTick = 0;
@@ -89,23 +96,34 @@ public class Player extends Entity {
     private void updatePos() {
         //por default para que quede en idle
         moving = false; //se manda a set animation
+
+        if(!left && !right && !up && !down)
+            return;
+
+        float xSpeed = 0, ySpeed = 0; //Velocidad temporal de x y
+
         if(left && !right){
-            x -= playerSpeed; //si solo estamos presionando izq
-            moving = true; //se manda a set animation
+            xSpeed = -playerSpeed; //si solo estamos presionando izq
         }else if(right && !left){ //si solo estamos presionando derecha
-            x += playerSpeed;
-            moving = true; //se manda a set animation
+            xSpeed = playerSpeed;
         }
-
         if(up && !down){
-            y -= playerSpeed; //si solo estamos presionando arriba
-            moving = true; //se manda a set animation
+            ySpeed = -playerSpeed; //si solo estamos presionando arriba
         }else if(down && !up){ //si solo estamos presionando abajo
-            y+=playerSpeed;
-            moving = true; //se manda a set animation
-
+            ySpeed  = playerSpeed;
         }
-
+        /*
+        if(CanMoveHere(x + xSpeed, y + ySpeed, width, height, lvlData)){
+            this.x += xSpeed;
+            this.y += ySpeed;
+            moving = true;
+        }
+*/
+        if(CanMoveHere(hitbox.x + xSpeed, hitbox.y + ySpeed, hitbox.width, hitbox.height, lvlData)){
+            hitbox.x += xSpeed;
+            hitbox.y += ySpeed;
+            moving = true;
+        }
     }
 
     /** Este metodo va a obtener la imagen del jugador desde loadsave y cargarla animaciones
@@ -118,9 +136,11 @@ public class Player extends Entity {
                     animations[j][i] = img.getSubimage(i * 64, j* 40, 64, 40);
 
         }
-
-
-
+    /** Inicializar o cambiar los datos del nivel en el juego
+     */
+    public void loadlvlData(int[][] lvlData){
+        this.lvlData = lvlData;
+    }
 
 
     public void resetDirBooleans(){
