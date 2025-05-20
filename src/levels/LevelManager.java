@@ -7,7 +7,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 import static main.Game.TILES_SIZE;
-
+/** Clase para gestionar los niveles del juego
+ * Cargar datos del nivel, renderizar graficos mediante sprites y dar acceso
+ */
 public class LevelManager {
     private Game game;
     private BufferedImage[] levelSprite;
@@ -20,6 +22,8 @@ public class LevelManager {
         levelOne = new Level(LoadSave.GetLevelData());
     }
 
+    /** Metodo para dividir sprites en tiles individuales y recortarlos
+     */
     private void importOutsideSprites() {
         BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.LEVEL_ATLAS);
         levelSprite = new BufferedImage[48];
@@ -30,7 +34,8 @@ public class LevelManager {
             }
     }
 
-
+    /** Metodo para dibujar el nivel en pantalla usando los sprits y datos de la matriz 2d lvl data del nivel
+     */
     public void draw(Graphics g) {
 
         for(int j = 0; j < Game.TILES_IN_HEIGHT; j++)

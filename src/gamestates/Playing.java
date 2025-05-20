@@ -17,7 +17,11 @@ public class Playing extends State implements Statemethods {
         super(game);
         initClasses();
     }
-
+    /**Metodo para ininciar las clases para el juego
+     * levelManager - gestor de niveles que controla los mapas
+     * Inicia la instancia de jugador definiendo su posicion inical y el tamaño de hitbox
+     * Datos del nivel actual
+     */
     private void initClasses() {
         levelManager = new LevelManager(game);
         player = new Player(200, 200, (int) (64 * Game.SCALE), (int) (40 * Game.SCALE));
