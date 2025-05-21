@@ -9,6 +9,12 @@ import utilz.LoadSave;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.Random;
+
+import utilz.Constants.Environment.*;
+
+import static utilz.Constants.Environment.*;
 
 public class Playing extends State implements Statemethods {
 
@@ -19,21 +25,30 @@ public class Playing extends State implements Statemethods {
 
     private int xLvlOffset;
     private int leftBorder = (int) (0.2 * Game.GAME_WIDTH);
-    private int rightBorder = (int) (0.8 * Game.GAME_WIDTH);
+    private int rightBorder = (int) (0.8 * Game.GAME_WIDTH); //Distancia desde el inicio de la camara hasta el borde derecho
     private int lvlTilesWide = LoadSave.GetLevelData()[0].length;
     private int maxTilesOffset = lvlTilesWide - Game.TILES_IN_WIDTH; //cuantas tiles podemoos ver
-    private int maxLvlOffsetX = maxTilesOffset * Game.TILES_SIZE;
+    private int maxLvlOffsetX = maxTilesOffset * Game.TILES_SIZE; //desplazamiento horizontal maximo permitido
 
-    private int xLlvlOffset;
     private int leftBorderLvl = (int) (0.2 * Game.GAME_WIDTH);
     private int rightBorderLvl = (int) (0.8 * Game.GAME_WIDTH);
     private int lvlTilesWideLvl = LoadSave.GetLevelData()[0].length;
     private int maxTilesOffsetLvl = lvlTilesWideLvl - Game.TILES_IN_WIDTH;
     private int maxLvlOffsetXLvl = maxTilesOffsetLvl * Game.TILES_SIZE;
 
+    private BufferedImage backgroundImg, bigCloud, smallCloud;
+    private int[] smallCloudsPos;
+    private Random rnd = new Random();
+
     public Playing(Game game) {
         super(game);
         initClasses();
+        backgroundImg = LoadSave.GetSpriteAtlas(LoadSave.PLAYING_BG_IMG);
+        bigCloud = LoadSave.GetSpriteAtlas(LoadSave.BIG_CLOUDS);
+        smallCloud = LoadSave.GetSpriteAtlas(LoadSave.SMALL_CLOUDS);
+        smallCloudsPos = new int[8];
+        for(int i = 0; i < smallCloudsPos.length; i++)
+            smallCloudsPos[i] = (int)(90 * Game.SCALE) + rnd.nextInt((int)(100*Game.SCALE));
     }
     /**Metodo para ininciar las clases para el juego
      * levelManager - gestor de niveles que controla los mapas
@@ -65,10 +80,15 @@ public class Playing extends State implements Statemethods {
             pauseOverlay.update();
         }
     }
-
+    /** Metodo para ajustar el desplazamiento del nivel de forma horizontal
+     * dependiendo la posicion del jugador y no se pierda de un lugar visible
+     *
+     * Se calcula usando la dif entre eljugador y el desplazamiento del nivel
+     * si diff es mayor a los bordes que estan permitidos signfica que se debe ajustar xLvlOFFSET
+     */
     private void checkCloseToBorder() {
-        int playerX = (int) player.getHitbox().x;
-        int diff = playerX - xLvlOffset;
+        int playerX = (int) player.getHitbox().x; //hitbox obtiene la posicion x para la proximidad de los bordes visibles
+        int diff = playerX - xLvlOffset; //lvloffset es el desplazamiento del nivel en la camara, controla el desplazamiento
 
         if (diff > rightBorder)
             xLvlOffset += diff - rightBorder;
@@ -81,9 +101,16 @@ public class Playing extends State implements Statemethods {
             xLvlOffset = 0;
 
     }
-
+    /**
+     * Metodo para dibujar durante el juego
+     */
     @Override
     public void draw(Graphics g) {
+
+        g.drawImage(backgroundImg, 0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT, null);
+
+        drawClouds(g);
+
         levelManager.draw(g, xLvlOffset);
         player.render(g, xLvlOffset);
 
@@ -92,6 +119,19 @@ public class Playing extends State implements Statemethods {
             g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
             pauseOverlay.draw(g);
         }
+    }
+
+    /**
+     * Metodo para dibujar las nubes varias veces por el mapa
+     * Se utiliza xLvlOffset para dar un aspecto como que se estuvieran moviendo mientras avanza el jugador
+     * Tmb la posicion de las nubes pequeñas utiliza un metodo que devuelve una posicion random
+     * @param g
+     */
+    private void drawClouds(Graphics g) {
+        for (int i = 0; i < 3; i++)
+            g.drawImage(bigCloud, i * BIG_CLOUD_WIDTH - (int)(xLvlOffset * 0.3), (int)(204 * Game.SCALE), BIG_CLOUD_WIDTH, BIG_CLOUD_HEIGHT, null);
+        for (int i = 0; i < smallCloudsPos.length; i++)
+            g.drawImage(smallCloud, SMALL_CLOUD_WIDTH * 4 * i - (int)(xLvlOffset * 0.7), smallCloudsPos[i], SMALL_CLOUD_WIDTH, SMALL_CLOUD_HEIGHT, null);
     }
 
     @Override
