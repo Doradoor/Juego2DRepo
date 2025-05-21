@@ -27,7 +27,7 @@ public abstract class Entity {
     }
     /** Este metodo lo usaremos para iniciar un hitbox como un rectangulo
      */
-    protected void initHitbox(float x, float y, float width, float height) {
+    protected void initHitbox(float x, float y, int width, int height) {
         hitbox = new Rectangle2D.Float(x, y, width, height);
     }
     /** Este metodo se usa para actualizar la posicion de la hitbox para que coincida con el objeto

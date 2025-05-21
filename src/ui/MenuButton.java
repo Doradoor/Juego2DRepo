@@ -46,7 +46,7 @@ public class MenuButton {
             imgs[i] = temp.getSubimage(i * B_WIDTH_DEFAULT, rowIndex * B_HEIGHT_DEFAULT, B_WIDTH_DEFAULT, B_HEIGHT_DEFAULT);
         }
     }
-    /** Metodo para dibujar el boton enla p antalla usando la iamgen correspondiente al index actual
+    /** Metodo para dibujar el boton enla pantalla usando la iamgen correspondiente al index actual
      * Ajusta la posicion con xOffsetCenter
      *
      */
