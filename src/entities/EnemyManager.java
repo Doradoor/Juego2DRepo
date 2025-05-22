@@ -20,7 +20,7 @@ public class EnemyManager {
     public EnemyManager(Playing playing) {
         this.playing = playing;
         loadEnemyImgs();
-        addEnemies();;
+        addEnemies();
     }
 
     /** Metodo para añadir enemigosa la lista y usamos loadsave para la configuracion de los enemigos
@@ -29,9 +29,9 @@ public class EnemyManager {
         crabbies = LoadSave.GetCrabs();
     }
 
-    public void update(int[][] lvlData){
+    public void update(int[][] lvlData, Player player){
         for(Crabby c : crabbies){
-            c.update(lvlData);
+            c.update(lvlData, player);
         }
     }
 
