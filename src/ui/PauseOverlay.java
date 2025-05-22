@@ -13,6 +13,9 @@ import static utilz.Constants.UI.PauseButtons.*;
 import static utilz.Constants.UI.URMButtons.*;
 import static utilz.Constants.UI.VolumeButtons.*;
 
+/** Clase para gestionar la pantalla de la interfaz de pausa del juego
+ *
+ */
 public class PauseOverlay {
 
     private Playing playing;
@@ -31,11 +34,13 @@ public class PauseOverlay {
 
     }
 
+
     private void createVolumeButton() {
         int vX = (int) (309 * Game.SCALE);
         int vY = (int) (278 * Game.SCALE);
         volumeButton = new VolumeButton(vX, vY, SLIDER_WIDTH, VOLUME_HEIGHT);
     }
+
 
     private void createUrmButtons() {
         int menuX = (int) (313 * Game.SCALE);

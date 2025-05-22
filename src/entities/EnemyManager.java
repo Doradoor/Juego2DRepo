@@ -27,12 +27,11 @@ public class EnemyManager {
      */
     private void addEnemies() {
         crabbies = LoadSave.GetCrabs();
-        System.out.println("Tamaño de cangrejos: " + crabbies.size());
     }
 
-    public void update(){
+    public void update(int[][] lvlData){
         for(Crabby c : crabbies){
-            c.update();
+            c.update(lvlData);
         }
     }
 
@@ -41,8 +40,8 @@ public class EnemyManager {
     }
 
     private void drawCrabs(Graphics g, int xLvlOffset) {
-        for (Crabby c: crabbies)
-            g.drawImage(crabbyArr[c.getEnemyState()][c.getAniIndex()], (int)c.getHitbox().x -  xLvlOffset, (int)c.getHitbox().y, CRABBY_WIDTH, CRABBY_HEIGHT, null);
+        for (Crabby c : crabbies)
+            g.drawImage(crabbyArr[c.getEnemyState()][c.getAniIndex()], (int) c.getHitbox().x - xLvlOffset - CRABBY_DRAWOFFSET_X, (int) c.getHitbox().y - CRABBY_DRAWOFFSET_Y, CRABBY_WIDTH, CRABBY_HEIGHT, null);
     }
     /** Metodo para cargar imagenes para las animaciones
      * Obtiene los sprites desde loadsave y divide el atlas en subimagenes

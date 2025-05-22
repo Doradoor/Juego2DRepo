@@ -21,9 +21,9 @@ public abstract class Entity {
         this.height = height;
     }
 
-    protected void drawHitbox(Graphics g){
+    protected void drawHitbox(Graphics g, int xLvlOffset){
         g.setColor(Color.PINK);
-        g.drawRect((int)hitbox.x, (int)hitbox.y, (int)hitbox.width, (int)hitbox.height);
+        g.drawRect((int)hitbox.x - xLvlOffset, (int)hitbox.y, (int)hitbox.width, (int)hitbox.height);
     }
     /** Este metodo lo usaremos para iniciar un hitbox como un rectangulo
      */
