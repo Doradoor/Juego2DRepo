@@ -29,10 +29,38 @@ public class Player extends Entity {
     private float jumpSpeed = -2.25f * Game.SCALE;
     private float fallSpeedAfterCollision = 0.5f * Game.SCALE;
     private boolean inAir = false;
+
+    // status bar ui
+    private BufferedImage statusBarImg;
+
+    private int statusBarWidth = (int)(192 * Game.SCALE);
+    private int statusBarHeight = (int)(58 * Game.SCALE);
+    private int statusBarX = (int)(10 * Game.SCALE);
+    private int statusBarY = (int)(10 * Game.SCALE);
+
+    private int healthBarWidth = (int)(150 * Game.SCALE);
+    private int healthBarHeight = (int)(4 * Game.SCALE);
+    private int healthBarXStart = (int)(34 * Game.SCALE);
+    private int healthBarYStart = (int)(14 * Game.SCALE);
+
+    private int maxHealth = 100;
+    private int currentHealth = 40;
+    private int healthWidth = healthBarWidth;
+
+    private Rectangle2D.Float attackBox; //para la espada
+    private int flipX = 0;
+    private int flipW = 0;
+
+
     public Player(float x, float y, int width, int height) {
         super(x, y, width, height);
         loadAnimations();
         initHitbox(x, y, (int) (20 * Game.SCALE), (int)(27 * Game.SCALE));
+        initAttackBox();
+    }
+
+    private void initAttackBox() {
+        attackBox = new Rectangle2D.Float(x, y, (int)(20 * Game.SCALE), (int)(20 * Game.SCALE));
     }
 
     /**
@@ -41,22 +69,58 @@ public class Player extends Entity {
      * setAnimation revisa si moving es o no true.
      */
     public void update() {
+        updateHealthBar();
+        updateAttackBox();
+        
         updatePos();
         updateAnimationTick();
         setAnimation();
     }
 
-    /**
-     * Se utiliza para dibujar al jugador
-     * @param g decribimos Graphics como un paintbush
-     *          O sea que lo usamos para dibujar
-     * Jpanel le indicara a Graphics donde puede dibujar
-     */
-    public void render(Graphics g, int lvlOffset) {
-        g.drawImage(animations[playerAction][aniIndex], (int) (hitbox.x - xDrawOffset) - lvlOffset, (int) (hitbox.y - yDrawOffset), width, height, null);
-        //drawHitbox(g);
+    private void updateAttackBox() {
+        if(right){
+            attackBox.x = hitbox.x + hitbox.width + (int)(Game.SCALE * 10);
+        }else if(left){
+            attackBox.x = hitbox.x - hitbox.width - (int)(Game.SCALE * 10);
+        }
+        attackBox.y = hitbox.y + (Game.SCALE * 10);
     }
 
+    private void updateHealthBar() {
+        healthWidth = (int)((currentHealth / (float)maxHealth) * healthBarWidth);
+    }
+
+    /**
+     * Renderiza al jugador en pantalla con sus animaciones y posición actual.
+     * Si el jugador da la vuelta, el sprite y las animaciones tambien se voltean horizontalmente.
+     *
+     * @param g El contexto grafico donde se dibujará el jugador.
+     * @param lvlOffset Desplazamiento del nivel en el eje X para ajustar la posición relativa del jugador.
+     *
+     * flipW invierte el ancho del sprite cuando se multiplica por -1 cuando el jugador cambia de direccion haciendo que se dibuje el sprite volteado en el eje horizontal
+     * flipX ajusta la posicion horizontal del sprite, corrigiendo el desplazamiento generado al voltear
+     */
+
+    public void render(Graphics g, int lvlOffset) {
+        g.drawImage(animations[playerAction][aniIndex],
+                (int) (hitbox.x - xDrawOffset) - lvlOffset + flipX,
+                (int) (hitbox.y - yDrawOffset),
+                width * flipW, height, null);
+        //drawHitbox(g);
+        drawAttackBox(g, lvlOffset);
+        drawUI(g);
+    }
+
+    private void drawAttackBox(Graphics g, int lvlOffsetX) {
+        g.setColor(Color.red);
+        g.drawRect((int)attackBox.x - lvlOffsetX, (int)attackBox.y, (int)attackBox.width, (int)attackBox.height);
+    }
+
+    private void drawUI(Graphics g) {
+        g.drawImage(statusBarImg, statusBarX, statusBarY, statusBarWidth, statusBarHeight, null);
+        g.setColor(Color.red);
+        g.fillRect(healthBarXStart + statusBarX, healthBarYStart + statusBarY, healthWidth, healthBarHeight);
+    }
 
 
     /**
@@ -94,7 +158,7 @@ public class Player extends Entity {
                 playerAction = FALLING;
         }
         if(attacking)
-            playerAction = ATTACK_1;
+            playerAction = ATTACK;
         if(startAni != playerAction)
             resetAniTick();
     }
@@ -123,11 +187,16 @@ public class Player extends Entity {
 
         float xSpeed = 0; //Velocidad temporal de x y
 
-        if(left)
+        if(left) {
             xSpeed -= playerSpeed; //si solo estamos presionando izq
-        if(right) //si solo estamos presionando derecha
+            flipX = width;
+            flipW = -1;
+        }
+        if(right) {//si solo estamos presionando derecha
             xSpeed += playerSpeed;
-
+            flipX = 0;
+            flipW = 1;
+        }
         if(!inAir){
             if(!IsEntityOnFloor(hitbox, lvlData)){
                 inAir = true;
@@ -176,15 +245,25 @@ public class Player extends Entity {
         }
     }
 
+    public void changeHealth(int value){
+        currentHealth += value;
+        if(currentHealth <= 0) {
+            currentHealth = 0;
+            //gameover
+        }else if(currentHealth >= maxHealth)
+            currentHealth = maxHealth;
+    }
+
     /** Este metodo va a obtener la imagen del jugador desde loadsave y cargarla animaciones
      */
     private void loadAnimations() {
             BufferedImage img = LoadSave.GetSpriteAtlas(LoadSave.PLAYER_ATLAS);
-            animations = new BufferedImage[9][6];
+            animations = new BufferedImage[7][8];
             for (int j = 0; j < animations.length; j++)
                 for (int i = 0; i < animations[j].length; i++)
                     animations[j][i] = img.getSubimage(i * 64, j* 40, 64, 40);
 
+            statusBarImg = LoadSave.GetSpriteAtlas(LoadSave.STATUS_BAR);
         }
     /** Inicializar o cambiar los datos del nivel en el juego
      */

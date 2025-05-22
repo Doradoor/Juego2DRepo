@@ -28,6 +28,7 @@ public abstract class Enemy extends Entity {
         this.enemyType = enemyType;
         initHitbox(x, y, width, height);
     }
+
     /**
      * Verifica si es necesario realizar la inicialización inicial del enemigo.
      * Si el enemigo no está sobre el suelo, se establece que está en el aire.
