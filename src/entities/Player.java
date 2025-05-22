@@ -106,7 +106,7 @@ public class Player extends Entity {
     }
 
     /**
-     * Metodo para que se actualice la posocion del jugador segun la entrada o condiciones como la gravedad/colisiones
+     * Metodo para que se actualice la posicion del jugador segun la entrada o condiciones como la gravedad/colisiones
      * Sirve para controlar los movimientos e interacciones del jugador
      */
     private void updatePos() {
