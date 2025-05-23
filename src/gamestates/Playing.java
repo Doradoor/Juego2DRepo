@@ -4,12 +4,14 @@ import entities.EnemyManager;
 import entities.Player;
 import levels.LevelManager;
 import main.Game;
+import ui.GameOverOverlay;
 import ui.PauseOverlay;
 import utilz.LoadSave;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
@@ -23,6 +25,7 @@ public class Playing extends State implements Statemethods {
     private LevelManager levelManager;
     private EnemyManager enemyManager;
     private PauseOverlay pauseOverlay;
+    private GameOverOverlay gameOverOverlay;
     private boolean paused = false;
 
     private int xLvlOffset;
@@ -42,6 +45,7 @@ public class Playing extends State implements Statemethods {
     private int[] smallCloudsPos;
     private Random rnd = new Random();
 
+    private boolean gameOver;
     public Playing(Game game) {
         super(game);
         initClasses();
@@ -49,10 +53,12 @@ public class Playing extends State implements Statemethods {
         bigCloud = LoadSave.GetSpriteAtlas(LoadSave.BIG_CLOUDS);
         smallCloud = LoadSave.GetSpriteAtlas(LoadSave.SMALL_CLOUDS);
         smallCloudsPos = new int[8];
-        for(int i = 0; i < smallCloudsPos.length; i++)
-            smallCloudsPos[i] = (int)(90 * Game.SCALE) + rnd.nextInt((int)(100*Game.SCALE));
+        for (int i = 0; i < smallCloudsPos.length; i++)
+            smallCloudsPos[i] = (int) (90 * Game.SCALE) + rnd.nextInt((int) (100 * Game.SCALE));
     }
-    /**Metodo para ininciar las clases para el juego
+
+    /**
+     * Metodo para ininciar las clases para el juego
      * levelManager - gestor de niveles que controla los mapas
      * Inicia la instancia de jugador definiendo su posicion inical y el tamaño de hitbox
      * Datos del nivel actual
@@ -60,14 +66,16 @@ public class Playing extends State implements Statemethods {
     private void initClasses() {
         levelManager = new LevelManager(game);
         enemyManager = new EnemyManager(this);
-        player = new Player(200, 200, (int) (64 * Game.SCALE), (int) (40 * Game.SCALE));
+        player = new Player(200, 200, (int) (64 * Game.SCALE), (int) (40 * Game.SCALE), this);
         player.loadlvlData(levelManager.getCurrentLevel().getLevelData());
         pauseOverlay = new PauseOverlay(this);
+        gameOverOverlay = new GameOverOverlay(this);
     }
 
-    public void windowFocusLost(){
+    public void windowFocusLost() {
         player.resetDirBooleans();
     }
+
     //getter para player
     public Player getPlayer() {
         return player;
@@ -75,7 +83,7 @@ public class Playing extends State implements Statemethods {
 
     @Override
     public void update() {
-        if (!paused) {
+        if (!paused && !gameOver) {
             levelManager.update();
             player.update();
             enemyManager.update(levelManager.getCurrentLevel().getLevelData(), player);
@@ -84,9 +92,11 @@ public class Playing extends State implements Statemethods {
             pauseOverlay.update();
         }
     }
-    /** Metodo para ajustar el desplazamiento del nivel de forma horizontal
+
+    /**
+     * Metodo para ajustar el desplazamiento del nivel de forma horizontal
      * dependiendo la posicion del jugador y no se pierda de un lugar visible
-     *
+     * <p>
      * Se calcula usando la dif entre eljugador y el desplazamiento del nivel
      * si diff es mayor a los bordes que estan permitidos signfica que se debe ajustar xLvlOFFSET
      */
@@ -105,6 +115,7 @@ public class Playing extends State implements Statemethods {
             xLvlOffset = 0;
 
     }
+
     /**
      * Metodo para dibujar durante el juego
      */
@@ -123,6 +134,8 @@ public class Playing extends State implements Statemethods {
             g.setColor(new Color(0, 0, 0, 150));
             g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
             pauseOverlay.draw(g);
+        } else if (gameOver) {
+            gameOverOverlay.draw(g);
         }
     }
 
@@ -130,43 +143,62 @@ public class Playing extends State implements Statemethods {
      * Metodo para dibujar las nubes varias veces por el mapa
      * Se utiliza xLvlOffset para dar un aspecto como que se estuvieran moviendo mientras avanza el jugador
      * Tmb la posicion de las nubes pequeñas utiliza un metodo que devuelve una posicion random
+     *
      * @param g
      */
     private void drawClouds(Graphics g) {
         for (int i = 0; i < 3; i++)
-            g.drawImage(bigCloud, i * BIG_CLOUD_WIDTH - (int)(xLvlOffset * 0.3), (int)(204 * Game.SCALE), BIG_CLOUD_WIDTH, BIG_CLOUD_HEIGHT, null);
+            g.drawImage(bigCloud, i * BIG_CLOUD_WIDTH - (int) (xLvlOffset * 0.3), (int) (204 * Game.SCALE), BIG_CLOUD_WIDTH, BIG_CLOUD_HEIGHT, null);
         for (int i = 0; i < smallCloudsPos.length; i++)
-            g.drawImage(smallCloud, SMALL_CLOUD_WIDTH * 4 * i - (int)(xLvlOffset * 0.7), smallCloudsPos[i], SMALL_CLOUD_WIDTH, SMALL_CLOUD_HEIGHT, null);
+            g.drawImage(smallCloud, SMALL_CLOUD_WIDTH * 4 * i - (int) (xLvlOffset * 0.7), smallCloudsPos[i], SMALL_CLOUD_WIDTH, SMALL_CLOUD_HEIGHT, null);
     }
 
+    public void resetAll() {
+        gameOver = false;
+        paused = false;
+        player.resetAll();
+        enemyManager.resetAllEnemies();
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+    public void checkEnemyHit(Rectangle2D.Float attackBox){
+        enemyManager.checkEnemyHit(attackBox);
+    }
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1){
-            player.setAttacking(true);
+        if (!gameOver)
+            if(e.getButton() == MouseEvent.BUTTON1){
+                player.setAttacking(true);
         }
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (paused)
-            pauseOverlay.mousePressed(e);
+        if(!gameOver)
+            if (paused)
+                pauseOverlay.mousePressed(e);
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (paused)
-            pauseOverlay.mouseReleased(e);
+        if(!gameOver)
+            if (paused)
+                pauseOverlay.mouseReleased(e);
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (paused)
-            pauseOverlay.mouseMoved(e);
+        if(!gameOver)
+            if (paused)
+                pauseOverlay.mouseMoved(e);
     }
 
     public void mouseDragged(MouseEvent e) {
-        if (paused)
-            pauseOverlay.mouseDragged(e);
+        if(!gameOver)
+            if (paused)
+                pauseOverlay.mouseDragged(e);
     }
 
     public void unpauseGame() {
@@ -175,25 +207,29 @@ public class Playing extends State implements Statemethods {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_A:
-                player.setLeft(true);
-                break;
-            case KeyEvent.VK_D:
-                player.setRight(true);
-                break;
-            case KeyEvent.VK_SPACE:
-                player.setJump(true);
-                break;
-            case KeyEvent.VK_ESCAPE:
-                paused = !paused;
-                break;
+        if(gameOver)
+            gameOverOverlay.keyPressed(e);
+        else
+            switch (e.getKeyCode()) {
+                case KeyEvent.VK_A:
+                    player.setLeft(true);
+                    break;
+                case KeyEvent.VK_D:
+                    player.setRight(true);
+                    break;
+                case KeyEvent.VK_SPACE:
+                    player.setJump(true);
+                    break;
+                case KeyEvent.VK_ESCAPE:
+                    paused = !paused;
+                    break;
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        switch (e.getKeyCode()) {
+        if(!gameOver)
+            switch (e.getKeyCode()) {
             case KeyEvent.VK_A:
                 player.setLeft(false);
                 break;
