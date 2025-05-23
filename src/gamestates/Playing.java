@@ -302,4 +302,15 @@ public class Playing extends State implements Statemethods {
         return levelManager;
     }
 
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public boolean isLevelCompleted() {
+        return lvlCompleted;
+    }
 }

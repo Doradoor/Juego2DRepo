@@ -44,9 +44,9 @@ public class Player extends Entity {
     private int healthBarXStart = (int)(34 * Game.SCALE);
     private int healthBarYStart = (int)(14 * Game.SCALE);
 
-    private int maxHealth = 10;
-    private int currentHealth = maxHealth;
-    private int healthWidth = healthBarWidth;
+    int maxHealth = 10;
+    int currentHealth = maxHealth;
+    int healthWidth = healthBarWidth;
 
     private Rectangle2D.Float attackBox; //para la espada
     private int flipX = 0;
@@ -88,7 +88,7 @@ public class Player extends Entity {
             return;
         }
         updateAttackBox();
-        
+
         updatePos();
         if(attacking)
             checkAttack();
@@ -113,7 +113,7 @@ public class Player extends Entity {
         attackBox.y = hitbox.y + (Game.SCALE * 10);
     }
 
-    private void updateHealthBar() {
+    void updateHealthBar() {
         healthWidth = (int)((currentHealth / (float)maxHealth) * healthBarWidth);
     }
 
@@ -370,6 +370,19 @@ public class Player extends Entity {
 
     public int getTileY() {
         return tileY;
+    }
+
+
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+
+    public int getCurrentHealth() {
+        return currentHealth;
+    }
+
+    public boolean isJump() {
+        return jump;
     }
 }
 
