@@ -1,8 +1,14 @@
 package utilz;
 
+import entities.Crabby;
 import main.Game;
 
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+
+import static utilz.Constants.EnemyConstants.CRABBY;
 
 public class HelpMethods {
 
@@ -138,6 +144,65 @@ public class HelpMethods {
             return IsAllTileWalkable(secondXtile, firstXtile, yTile, lvlData);
         else
             return IsAllTileWalkable(firstXtile, secondXtile, yTile, lvlData);
+    }
+
+    /**
+     * Este metodo toma la imagen levelonedata que actua como un mapa visual para el nivel
+     * Se recorren los pixeles de la imagen con un doble bucle y se obtiene su componente de color rojo para determinar el tipo de cuadro
+     */
+    public static int[][] GetLevelData(BufferedImage img) {
+        int[][] lvlData = new int[img.getHeight()][img.getWidth()];
+
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getRed();
+                if (value >= 48)
+                    value = 0;
+                lvlData[j][i] = value; //cualquier valor q sea rojo sera index para el sprite
+            }
+        return lvlData;
+    }
+
+    /**
+     * Obtiene una lista de objetos de Crabby
+     *
+     * @return Una lista de instancias de la clase crabby, donde cada una
+     *         esta ubicada segun los pixeles correspondientes en la imagen
+     *
+     * Este metodo usa un atlascomo referencia, donde cada pixel contiene
+     * información codificada sobre los elementos presentes en el nivel. Si el valor del
+     * color verde de un pixel coincide con el valor esperado para un "Crabby", se crea
+     * una instancia de crabby en la posicion correspondiente
+     */
+
+    public static ArrayList<Crabby> GetCrabs(BufferedImage img){
+        ArrayList<Crabby> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j)); //vamos por la imagen y si encontramos un valor un color cuyo valor sea crabby agregamos un crabby en esa posicion
+                int value = color.getGreen();
+                if (value == CRABBY)
+                    list.add(new Crabby(i * Game.TILES_SIZE, j*Game.TILES_SIZE));
+            }
+        return list;
+    }
+    /**
+     * Obtiene el punto de spawn del jugador desde una imagen basada en el color verde
+     *
+     * @param img imagen a analizar
+     * @return coordenadas del spawn, o el punto por defecto si no se encuentra
+     */
+
+    public static Point GetPlayerSpawn(BufferedImage img) {
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getGreen();
+                if (value == 100)
+                    return new Point(i * Game.TILES_SIZE, j * Game.TILES_SIZE);
+            }
+        return new Point(1 * Game.TILES_SIZE, 1 * Game.TILES_SIZE);
     }
 }
 

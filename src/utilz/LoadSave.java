@@ -7,8 +7,11 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import static utilz.Constants.EnemyConstants.CRABBY;
@@ -17,8 +20,6 @@ import static utilz.Constants.EnemyConstants.CRABBY;
 public class LoadSave {
     public static final String PLAYER_ATLAS = "player_sprites.png";
     public static final String LEVEL_ATLAS = "outside_sprites.png";
-    //public static final String LEVEL_ONE_DATA = "level_one_data.png";
-    public static final String LEVEL_ONE_DATA = "level_one_data_long.png";
     public static final String MENU_BUTTONS = "button_atlas.png";
     public static final String MENU_BACKGROUND = "menu_background.png";
     public static final String PAUSE_BACKGROUND = "pause_menu.png";
@@ -31,7 +32,7 @@ public class LoadSave {
     public static final String SMALL_CLOUDS = "small_clouds.png";
     public static final String CRABBY_SPRITE = "crabby_sprite.png";
     public static final String STATUS_BAR = "health_power_bar.png";
-
+    public static final String COMPLETED_IMG = "completed_sprite.png";
 
 
     /**
@@ -48,7 +49,7 @@ public class LoadSave {
             img = ImageIO.read(is);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         } finally {
             try {
                 is.close();
@@ -58,46 +59,44 @@ public class LoadSave {
         }
         return img;
     }
-    /**
-     * Obtiene una lista de objetos de Crabby
-     *
-     * @return Una lista de instancias de la clase crabby, donde cada una
-     *         esta ubicada segun los pixeles correspondientes en la imagen
-     *
-     * Este metodo usa un atlascomo referencia, donde cada pixel contiene
-     * información codificada sobre los elementos presentes en el nivel. Si el valor del
-     * color verde de un pixel coincide con el valor esperado para un "Crabby", se crea
-     * una instancia de crabby en la posicion correspondiente
-     */
 
-    public static ArrayList<Crabby> GetCrabs(){
-        BufferedImage img = GetSpriteAtlas(LEVEL_ONE_DATA);
-        ArrayList<Crabby> list = new ArrayList<>();
-        for (int j = 0; j < img.getHeight(); j++)
-            for (int i = 0; i < img.getWidth(); i++) {
-                Color color = new Color(img.getRGB(i, j)); //vamos por la imagen y si encontramos un valor un color cuyo valor sea crabby agregamos un crabby en esa posicion
-                int value = color.getGreen();
-                if (value == CRABBY)
-                    list.add(new Crabby(i * Game.TILES_SIZE, j*Game.TILES_SIZE));
-            }
-        return list;
-    }
     /**
-     * Este metodo toma la imagen levelonedata que actua como un mapa visual para el nivel
-     * Se recorren los pixeles de la imagen con un doble bucle y se obtiene su componente de color rojo para determinar el tipo de cuadro
+     * Carga las imagenes de niveles desde la carpeta /lvls, las ordena y las devuelve
+     *
+     * @return Array de BufferedImage con las imagenes de los niveles en orden
      */
-    public static int[][] GetLevelData() {
-        BufferedImage img = GetSpriteAtlas(LoadSave.LEVEL_ONE_DATA);
-        int[][] lvlData = new int[img.getHeight()][img.getWidth()];
+    public static BufferedImage[] GetAllLevels() {
+        URL url = LoadSave.class.getResource("/lvls");
+        File file = null;
 
-        for (int j = 0; j < img.getHeight(); j++)
-            for (int i = 0; i < img.getWidth(); i++) {
-                Color color = new Color(img.getRGB(i, j));
-                int value = color.getRed();
-                if (value >= 48)
-                    value = 0;
-                lvlData[j][i] = value; //cualquier valor q sea rojo sera index para el sprite
+        try {
+            file = new File(url.toURI());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        File[] files = file.listFiles();
+        File[] filesSorted = new File[files.length];
+
+        for (int i = 0; i < filesSorted.length; i++)
+            for (int j = 0; j < files.length; j++) {
+                if (files[j].getName().equals((i + 1) + ".png"))
+                    filesSorted[i] = files[j];
+
             }
-        return lvlData;
+
+        BufferedImage[] imgs = new BufferedImage[filesSorted.length];
+
+        for (int i = 0; i < imgs.length; i++)
+            try {
+                imgs[i] = ImageIO.read(filesSorted[i]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        return imgs;
     }
+
+
+
 }

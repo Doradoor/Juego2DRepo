@@ -7,7 +7,6 @@ import java.awt.geom.Rectangle2D;
 
 import static utilz.Constants.Directions.RIGHT;
 import static utilz.Constants.EnemyConstants.*;
-import static utilz.Constants.Directions.*;
 public class Crabby extends Enemy{
 
     private Rectangle2D.Float attackBox; //para la espada
@@ -63,7 +62,7 @@ public class Crabby extends Enemy{
                     if(aniIndex == 0)
                         attackChecked = false;
                     if(aniIndex == 3 && !attackChecked)
-                        checkEnemyHit(attackBox,player);
+                        checkPlayerHit(attackBox,player);
                     break;
                 case HIT:
                     break;

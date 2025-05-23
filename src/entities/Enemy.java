@@ -166,7 +166,7 @@ public abstract class Enemy extends Entity {
             newState(HIT);
     }
 
-    protected void checkEnemyHit(Rectangle2D.Float attackBox, Player player) {
+    protected void checkPlayerHit(Rectangle2D.Float attackBox, Player player) {
         if(attackBox.intersects(player.hitbox))
             player.changeHealth(-GetEnemyDmg(enemyType));
         attackChecked = true;
@@ -177,22 +177,16 @@ public abstract class Enemy extends Entity {
 
     protected void updateAnimationTick(){
         aniTick++;
-        if(aniTick >= aniSpeed){
+        if (aniTick >= aniSpeed) {
             aniTick = 0;
             aniIndex++;
-            if(aniIndex >= GetSpriteAmount(enemyType, enemyState)){
+            if (aniIndex >= GetSpriteAmount(enemyType, enemyState)) {
                 aniIndex = 0;
 
-                switch (enemyState){
+                switch (enemyState) {
                     case ATTACK, HIT -> enemyState = IDLE;
                     case DEAD -> active = false;
                 }
-                if(enemyState == ATTACK)
-                    enemyState = IDLE;
-                else if(enemyState == HIT)
-                    enemyState = IDLE;
-                else if(enemyState == DEAD)
-                    active = false;
             }
         }
     }

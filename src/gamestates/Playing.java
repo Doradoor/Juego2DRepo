@@ -1,22 +1,21 @@
 package gamestates;
 
-import entities.EnemyManager;
-import entities.Player;
-import levels.LevelManager;
-import main.Game;
-import ui.GameOverOverlay;
-import ui.PauseOverlay;
-import utilz.LoadSave;
-
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
-import utilz.Constants.Environment.*;
-
+import entities.EnemyManager;
+import entities.Player;
+import levels.LevelManager;
+import main.Game;
+import ui.GameOverOverlay;
+import ui.LevelCompletedOverlay;
+import ui.PauseOverlay;
+import utilz.LoadSave;
 import static utilz.Constants.Environment.*;
 
 public class Playing extends State implements Statemethods {
@@ -26,26 +25,21 @@ public class Playing extends State implements Statemethods {
     private EnemyManager enemyManager;
     private PauseOverlay pauseOverlay;
     private GameOverOverlay gameOverOverlay;
+    private LevelCompletedOverlay levelCompletedOverlay;
     private boolean paused = false;
 
     private int xLvlOffset;
     private int leftBorder = (int) (0.2 * Game.GAME_WIDTH);
     private int rightBorder = (int) (0.8 * Game.GAME_WIDTH); //Distancia desde el inicio de la camara hasta el borde derecho
-    private int lvlTilesWide = LoadSave.GetLevelData()[0].length;
-    private int maxTilesOffset = lvlTilesWide - Game.TILES_IN_WIDTH; //cuantas tiles podemoos ver
-    private int maxLvlOffsetX = maxTilesOffset * Game.TILES_SIZE; //desplazamiento horizontal maximo permitido
-
-    private int leftBorderLvl = (int) (0.2 * Game.GAME_WIDTH);
-    private int rightBorderLvl = (int) (0.8 * Game.GAME_WIDTH);
-    private int lvlTilesWideLvl = LoadSave.GetLevelData()[0].length;
-    private int maxTilesOffsetLvl = lvlTilesWideLvl - Game.TILES_IN_WIDTH;
-    private int maxLvlOffsetXLvl = maxTilesOffsetLvl * Game.TILES_SIZE;
+    private int maxLvlOffsetX;
 
     private BufferedImage backgroundImg, bigCloud, smallCloud;
     private int[] smallCloudsPos;
     private Random rnd = new Random();
 
     private boolean gameOver;
+    private boolean lvlCompleted;
+
     public Playing(Game game) {
         super(game);
         initClasses();
@@ -55,6 +49,21 @@ public class Playing extends State implements Statemethods {
         smallCloudsPos = new int[8];
         for (int i = 0; i < smallCloudsPos.length; i++)
             smallCloudsPos[i] = (int) (90 * Game.SCALE) + rnd.nextInt((int) (100 * Game.SCALE));
+
+        calcLvlOffset();
+        loadStartLevel();
+    }
+    public void loadNextLevel(){
+        resetAll();
+        levelManager.loadNextLevel();
+        player.setSpawn(levelManager.getCurrentLevel().getPlayerSpawn());
+    }
+    private void loadStartLevel() {
+        enemyManager.loadEnemies(levelManager.getCurrentLevel());
+    }
+
+    private void calcLvlOffset() {
+        maxLvlOffsetX = levelManager.getCurrentLevel().getLvlOffset();
     }
 
     /**
@@ -66,10 +75,14 @@ public class Playing extends State implements Statemethods {
     private void initClasses() {
         levelManager = new LevelManager(game);
         enemyManager = new EnemyManager(this);
+
         player = new Player(200, 200, (int) (64 * Game.SCALE), (int) (40 * Game.SCALE), this);
         player.loadlvlData(levelManager.getCurrentLevel().getLevelData());
+        player.setSpawn(levelManager.getCurrentLevel().getPlayerSpawn());
+
         pauseOverlay = new PauseOverlay(this);
         gameOverOverlay = new GameOverOverlay(this);
+        levelCompletedOverlay = new LevelCompletedOverlay(this);
     }
 
     public void windowFocusLost() {
@@ -83,13 +96,15 @@ public class Playing extends State implements Statemethods {
 
     @Override
     public void update() {
-        if (!paused && !gameOver) {
+        if (paused) {
+            pauseOverlay.update();
+        } else if (lvlCompleted) {
+            levelCompletedOverlay.update();
+        } else if (!gameOver) {
             levelManager.update();
             player.update();
             enemyManager.update(levelManager.getCurrentLevel().getLevelData(), player);
             checkCloseToBorder();
-        } else {
-            pauseOverlay.update();
         }
     }
 
@@ -134,9 +149,10 @@ public class Playing extends State implements Statemethods {
             g.setColor(new Color(0, 0, 0, 150));
             g.fillRect(0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT);
             pauseOverlay.draw(g);
-        } else if (gameOver) {
+        } else if (gameOver)
             gameOverOverlay.draw(g);
-        }
+        else if (lvlCompleted)
+            levelCompletedOverlay.draw(g);
     }
 
     /**
@@ -156,6 +172,7 @@ public class Playing extends State implements Statemethods {
     public void resetAll() {
         gameOver = false;
         paused = false;
+        lvlCompleted = false;
         player.resetAll();
         enemyManager.resetAllEnemies();
     }
@@ -176,29 +193,46 @@ public class Playing extends State implements Statemethods {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if(!gameOver)
+        if(!gameOver) {
             if (paused)
                 pauseOverlay.mousePressed(e);
+            else if(lvlCompleted)
+                levelCompletedOverlay.mousePressed(e);
+        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if(!gameOver)
+        if(!gameOver) {
             if (paused)
                 pauseOverlay.mouseReleased(e);
+            else if (lvlCompleted)
+                levelCompletedOverlay.mouseReleased(e);
+        }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if(!gameOver)
+        if (!gameOver) {
             if (paused)
                 pauseOverlay.mouseMoved(e);
+            else if (lvlCompleted)
+                levelCompletedOverlay.mouseMoved(e);
+        }
     }
+
+    public void setLevelCompleted(boolean levelCompleted){
+            this.lvlCompleted = levelCompleted;
+        }
 
     public void mouseDragged(MouseEvent e) {
         if(!gameOver)
             if (paused)
                 pauseOverlay.mouseDragged(e);
+    }
+
+    public void setMaxLvlOffset(int lvlOffset){
+        this.maxLvlOffsetX = lvlOffset;
     }
 
     public void unpauseGame() {
@@ -240,5 +274,9 @@ public class Playing extends State implements Statemethods {
                 player.setJump(false);
                 break;
         }
+    }
+
+    public EnemyManager getEnemyManager(){
+        return enemyManager;
     }
 }

@@ -1,11 +1,10 @@
 package main;
 
+import java.awt.Graphics;
 import gamestates.Gamestate;
-import gamestates.Playing;
 import gamestates.Menu;
-
-import java.awt.*;
-
+import gamestates.Playing;
+import utilz.LoadSave;
 
 public class Game implements Runnable {
 
@@ -19,45 +18,36 @@ public class Game implements Runnable {
     private Menu menu;
 
     public final static int TILES_DEFAULT_SIZE = 32;
-    public final static float SCALE = 1.5f;
+    public final static float SCALE = 2f;
     public final static int TILES_IN_WIDTH = 26;
     public final static int TILES_IN_HEIGHT = 14;
     public final static int TILES_SIZE = (int) (TILES_DEFAULT_SIZE * SCALE);
-    public final static int GAME_WIDTH = TILES_IN_WIDTH * TILES_SIZE;
-    public final static int GAME_HEIGHT = TILES_IN_HEIGHT * TILES_SIZE;
+    public final static int GAME_WIDTH = TILES_SIZE * TILES_IN_WIDTH;
+    public final static int GAME_HEIGHT = TILES_SIZE * TILES_IN_HEIGHT;
 
-    public Game(){
+    public Game() {
         initClasses();
+
         gamePanel = new GamePanel(this);
         gameWindow = new GameWindow(gamePanel);
         gamePanel.setFocusable(true);
         gamePanel.requestFocus();
-        startGameLoop(); //tiene q ser la unica cosa en cargar
+
+        startGameLoop();
     }
 
     private void initClasses() {
-
         menu = new Menu(this);
         playing = new Playing(this);
     }
 
-    /**
-     * Metodo para iniciar el gameLoop en un thread diferente
-     * de esta forma se separa del main thread y el juego pueda ir mucho mas fluido
-     * No tendra tanto lag y no habra trafico
-     * Al thread le pasamos un metodo llamado runnable es para pasar el codigo que queremos correr
-     *
-     */
-    private void startGameLoop(){
+    private void startGameLoop() {
         gameThread = new Thread(this);
         gameThread.start();
     }
 
-    /**
-     * Metodo para actualizar
-     */
-    public void update(){
-        switch(Gamestate.state){
+    public void update() {
+        switch (Gamestate.state) {
             case MENU:
                 menu.update();
                 break;
@@ -69,12 +59,12 @@ public class Game implements Runnable {
             default:
                 System.exit(0);
                 break;
+
         }
     }
 
-    public void render(Graphics g){
-
-        switch(Gamestate.state){
+    public void render(Graphics g) {
+        switch (Gamestate.state) {
             case MENU:
                 menu.draw(g);
                 break;
@@ -101,10 +91,10 @@ public class Game implements Runnable {
         double deltaU = 0;
         double deltaF = 0;
 
-        while(true){
+        while (true) {
             long currentTime = System.nanoTime();
 
-            deltaU += (currentTime - previousTime) / timePerUpdate; //para saber que es hora de actualizar, de esta forma no perdemos tiempo en el gameloop
+            deltaU += (currentTime - previousTime) / timePerUpdate;
             deltaF += (currentTime - previousTime) / timePerFrame;
             previousTime = currentTime;
 
@@ -114,32 +104,28 @@ public class Game implements Runnable {
                 deltaU--;
             }
 
-           if(deltaF >= 1){
-               gamePanel.repaint();
-               frames++;
-               deltaF--;
-           }
-
-            /*
-            if(now - lastFrame >= timePerFrame){
+            if (deltaF >= 1) {
                 gamePanel.repaint();
-                lastFrame = now;
                 frames++;
+                deltaF--;
             }
-             */
+
             if (System.currentTimeMillis() - lastCheck >= 1000) {
                 lastCheck = System.currentTimeMillis();
-                System.out.println("FPS: " + frames + "| UPS: " + updates);
+                System.out.println("FPS: " + frames + " | UPS: " + updates);
                 frames = 0;
                 updates = 0;
+
             }
         }
+
     }
-    public void windowFocusLost(){
-        if(Gamestate.state == Gamestate.PLAYING){
+
+    public void windowFocusLost() {
+        if (Gamestate.state == Gamestate.PLAYING)
             playing.getPlayer().resetDirBooleans();
-        }
     }
+
     public Menu getMenu() {
         return menu;
     }

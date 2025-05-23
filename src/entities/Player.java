@@ -15,7 +15,7 @@ import static utilz.HelpMethods.*;
 public class Player extends Entity {
 
     private BufferedImage[][] animations;
-    private int aniTick, aniIndex, aniSpeed = 30;
+    private int aniTick, aniIndex, aniSpeed = 25;
     private int playerAction = IDLE;
     private boolean moving = false, attacking = false;
     private boolean left, up, right, down, jump;
@@ -44,13 +44,13 @@ public class Player extends Entity {
     private int healthBarXStart = (int)(34 * Game.SCALE);
     private int healthBarYStart = (int)(14 * Game.SCALE);
 
-    private int maxHealth = 100;
-    private int currentHealth = 40;
+    private int maxHealth = 10;
+    private int currentHealth = maxHealth;
     private int healthWidth = healthBarWidth;
 
     private Rectangle2D.Float attackBox; //para la espada
     private int flipX = 0;
-    private int flipW = 0;
+    private int flipW = 1;
 
     private boolean attackChecked;
     private Playing playing;
@@ -61,6 +61,13 @@ public class Player extends Entity {
         loadAnimations();
         initHitbox(x, y, (int) (20 * Game.SCALE), (int)(27 * Game.SCALE));
         initAttackBox();
+    }
+
+    public void setSpawn(Point spawn) {
+        this.x = spawn.x;
+        this.y = spawn.y;
+        hitbox.x = x;
+        hitbox.y = y;
     }
 
     private void initAttackBox() {
@@ -126,7 +133,7 @@ public class Player extends Entity {
                 (int) (hitbox.y - yDrawOffset),
                 width * flipW, height, null);
         //drawHitbox(g);
-        drawAttackBox(g, lvlOffset);
+       // drawAttackBox(g, lvlOffset);
         drawUI(g);
     }
 
