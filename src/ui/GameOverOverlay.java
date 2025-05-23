@@ -13,6 +13,16 @@ public class GameOverOverlay {
     public GameOverOverlay(Playing playing){
         this.playing = playing;
     }
+    /**
+     * Dibuja la imagen de "Game Over" en la pantalla.
+     *
+     * @param g objeto graphics para dibujar
+     *
+     * Este metodo crea un fondo semitransparente para mostrar el texto de "Game Over"
+     * al centro de la pantalla y un mensaje indicando que el jugador debe
+     * presionar la tecla Esc para volver al menu principal
+     */
+
 
     public void draw(Graphics g){
         g.setColor(new Color(0,0,0,200));

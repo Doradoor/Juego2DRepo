@@ -58,6 +58,17 @@ public class LoadSave {
         }
         return img;
     }
+    /**
+     * Obtiene una lista de objetos de Crabby
+     *
+     * @return Una lista de instancias de la clase crabby, donde cada una
+     *         esta ubicada segun los pixeles correspondientes en la imagen
+     *
+     * Este metodo usa un atlascomo referencia, donde cada pixel contiene
+     * información codificada sobre los elementos presentes en el nivel. Si el valor del
+     * color verde de un pixel coincide con el valor esperado para un "Crabby", se crea
+     * una instancia de crabby en la posicion correspondiente
+     */
 
     public static ArrayList<Crabby> GetCrabs(){
         BufferedImage img = GetSpriteAtlas(LEVEL_ONE_DATA);
