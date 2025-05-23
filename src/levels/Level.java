@@ -6,6 +6,9 @@ import main.Game;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import objects.Cannon;
+import utilz.HelpMethods;
+
 
 import static utilz.HelpMethods.*;
 
@@ -16,6 +19,7 @@ public class Level {
     private BufferedImage img;
     private int[][] lvlData;
     private ArrayList<Crabby> crabs;
+    private ArrayList<Cannon> cannons;
     private int lvlTilesWide;
     private int maxTilesOffset;
     private int maxLvlOffsetX;
@@ -27,9 +31,12 @@ public class Level {
         createLevelData();
         createEnemies();
         calcLvlOffsets();
+        createCannons();
         calcPlayerSpawn();
     }
-
+    private void createCannons() {
+        cannons = HelpMethods.GetCannons(img);
+    }
     private void calcPlayerSpawn() {
         playerSpawn = GetPlayerSpawn(img);
     }
@@ -67,5 +74,9 @@ public class Level {
 
     public Point getPlayerSpawn() {
         return playerSpawn;
+    }
+
+    public ArrayList<Cannon> getCannons() {
+        return cannons;
     }
 }
