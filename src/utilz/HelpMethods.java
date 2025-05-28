@@ -4,11 +4,20 @@ import entities.Crabby;
 import main.Game;
 import objects.Cannon;
 import objects.Projectile;
+import static utilz.Constants.ObjectConstants.*;
+
+import objects.GameContainer;
+import objects.Potion;
+
+
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import objects.Spike;
+
+
 
 import static utilz.Constants.EnemyConstants.CRABBY;
 import static utilz.Constants.ObjectConstants.CANNON_LEFT;
@@ -142,12 +151,11 @@ public class HelpMethods {
      */
 
     public static boolean IsAllTileWalkable(int xStart, int xEnd, int y, int[][] lvlData) {
-        for (int i = 0; i < xEnd - xStart; i++) {
-            if (IsTileSolid(xStart + i, y, lvlData))
-                return false;
-            if (!IsTileSolid(xStart + i, y+1, lvlData))
-                return false;
-        }
+        if (IsAllTilesClear(xStart, xEnd, y, lvlData))
+            for (int i = 0; i < xEnd - xStart; i++) {
+                if (!IsTileSolid(xStart + i, y + 1, lvlData))
+                    return false;
+            }
         return true;
     }
 
@@ -232,13 +240,54 @@ public class HelpMethods {
     }
 
 
+    public static ArrayList<Potion> GetPotions(BufferedImage img) {
+        ArrayList<Potion> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == RED_POTION || value == BLUE_POTION)
+                    list.add(new Potion(i * Game.TILES_SIZE, j * Game.TILES_SIZE, value));
+            }
+
+        return list;
+    }
+
+    public static ArrayList<GameContainer> GetContainers(BufferedImage img) {
+        ArrayList<GameContainer> list = new ArrayList<>();
+        for (int j = 0; j < img.getHeight(); j++)
+            for (int i = 0; i < img.getWidth(); i++) {
+                Color color = new Color(img.getRGB(i, j));
+                int value = color.getBlue();
+                if (value == BOX || value == BARREL)
+                    list.add(new GameContainer(i * Game.TILES_SIZE, j * Game.TILES_SIZE, value));
+            }
+
+        return list;
+    }
+
+
 /**
  * Obtiene una lista de canones de la imagen segun el color azul.
  * Escala posiciones con Game.TILES_SIZE.
  */
 
+public static ArrayList<Spike> GetSpikes(BufferedImage img) {
+    ArrayList<Spike> list = new ArrayList<>();
 
-public static ArrayList<Cannon> GetCannons(BufferedImage img) {
+    for (int j = 0; j < img.getHeight(); j++)
+        for (int i = 0; i < img.getWidth(); i++) {
+            Color color = new Color(img.getRGB(i, j));
+            int value = color.getBlue();
+            if (value == SPIKE)
+                list.add(new Spike(i * Game.TILES_SIZE, j * Game.TILES_SIZE, SPIKE));
+        }
+
+    return list;
+}
+
+
+    public static ArrayList<Cannon> GetCannons(BufferedImage img) {
     ArrayList<Cannon> list = new ArrayList<>();
 
     for (int j = 0; j < img.getHeight(); j++)

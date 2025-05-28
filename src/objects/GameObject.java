@@ -30,12 +30,14 @@ public class GameObject {
             aniIndex++;
             if (aniIndex >= GetSpriteAmount(objType)) {
                 aniIndex = 0;
-                doAnimation = false;
-                active = false;
-            }
+                if (objType == BARREL || objType == BOX) {
+                    doAnimation = false;
+                    active = false;
                 } else if (objType == CANNON_LEFT || objType == CANNON_RIGHT)
                     doAnimation = false;
             }
+        }
+    }
 
 
     public void reset() {
@@ -43,7 +45,7 @@ public class GameObject {
         aniTick = 0;
         active = true;
 
-        if (objType == CANNON_LEFT || objType == CANNON_RIGHT)
+        if (objType == CANNON_LEFT || objType == CANNON_RIGHT || objType == BARREL || objType == BOX)
             doAnimation = false;
         else
             doAnimation = true;
