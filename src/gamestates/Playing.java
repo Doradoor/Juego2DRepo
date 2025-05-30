@@ -6,8 +6,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Random;
 
+import effects.DialogueEffect;
+import effects.Rain;
 import entities.EnemyManager;
 import entities.Player;
 import levels.LevelManager;
@@ -17,6 +20,8 @@ import ui.GameOverOverlay;
 import ui.LevelCompletedOverlay;
 import ui.PauseOverlay;
 import utilz.LoadSave;
+
+import static utilz.Constants.Dialogue.*;
 import static utilz.Constants.Environment.*;
 
 public class Playing extends State implements Statemethods {
@@ -32,17 +37,27 @@ public class Playing extends State implements Statemethods {
     private boolean paused = false;
 
     private int xLvlOffset;
-    private int leftBorder = (int) (0.2 * Game.GAME_WIDTH);
-    private int rightBorder = (int) (0.8 * Game.GAME_WIDTH); //Distancia desde el inicio de la camara hasta el borde derecho
+    private int leftBorder = (int) (0.25 * Game.GAME_WIDTH);
+    private int rightBorder = (int) (0.75 * Game.GAME_WIDTH); //Distancia desde el inicio de la camara hasta el borde derecho
     private int maxLvlOffsetX;
 
-    private BufferedImage backgroundImg, bigCloud, smallCloud;
+    private BufferedImage backgroundImg, bigCloud, smallCloud, shipImgs[];
+    private BufferedImage[] questionImgs, exclamationImgs;
+    private ArrayList<DialogueEffect> dialogEffects = new ArrayList<>();
     private int[] smallCloudsPos;
     private Random rnd = new Random();
+    private Rain rain;
+
+
 
     private boolean gameOver;
     private boolean lvlCompleted;
     private boolean playerDying;
+    private boolean drawRain;
+
+    private boolean drawShip = true;
+    private int shipAni, shipTick, shipDir = 1;
+    private float shipHeightDelta, shipHeightChange = 0.05f * Game.SCALE;
 
 
 
@@ -55,20 +70,51 @@ public class Playing extends State implements Statemethods {
         smallCloudsPos = new int[8];
         for (int i = 0; i < smallCloudsPos.length; i++)
             smallCloudsPos[i] = (int) (90 * Game.SCALE) + rnd.nextInt((int) (100 * Game.SCALE));
-
+        shipImgs = new BufferedImage[4];
+        BufferedImage temp = LoadSave.GetSpriteAtlas(LoadSave.SHIP);
+        for (int i = 0; i < shipImgs.length; i++)
+            shipImgs[i] = temp.getSubimage(i * 78, 0, 78, 72);
+        loadDialogue();
         calcLvlOffset();
         loadStartLevel();
     }
+
+    private void loadDialogue() {
+        loadDialogueImgs();
+        for (int i = 0; i < 10; i++)
+            dialogEffects.add(new DialogueEffect(0, 0, EXCLAMATION));
+        for (int i = 0; i < 10; i++)
+            dialogEffects.add(new DialogueEffect(0, 0, QUESTION));
+
+        for (DialogueEffect de : dialogEffects)
+            de.deactive();
+    }
+
+    private void loadDialogueImgs() {
+        BufferedImage qtemp = LoadSave.GetSpriteAtlas(LoadSave.QUESTION_ATLAS);
+        questionImgs = new BufferedImage[5];
+        for (int i = 0; i < questionImgs.length; i++)
+            questionImgs[i] = qtemp.getSubimage(i * 14, 0, 14, 12);
+
+        BufferedImage etemp = LoadSave.GetSpriteAtlas(LoadSave.EXCLAMATION_ATLAS);
+        exclamationImgs = new BufferedImage[5];
+        for (int i = 0; i < exclamationImgs.length; i++)
+            exclamationImgs[i] = etemp.getSubimage(i * 14, 0, 14, 12);
+    }
+
     public void loadNextLevel(){
         resetAll();
+        levelManager.setLevelIndex(levelManager.getLevelIndex() + 1);
         levelManager.loadNextLevel();
         player.setSpawn(levelManager.getCurrentLevel().getPlayerSpawn());
+        drawShip = false;
+
     }
     private void loadStartLevel() {
 
         enemyManager.loadEnemies(levelManager.getCurrentLevel());
         objectManager.loadObjects(levelManager.getCurrentLevel());
-
+        rain = new Rain();
     }
 
     private void calcLvlOffset() {
@@ -115,13 +161,64 @@ public class Playing extends State implements Statemethods {
         } else if (playerDying) {
             player.update();
         } else {
+            updateDialogue();
+            if (drawRain)
+                rain.update(xLvlOffset);
             levelManager.update();
             objectManager.update(levelManager.getCurrentLevel().getLevelData(), player);
             player.update();
-            enemyManager.update(levelManager.getCurrentLevel().getLevelData(), player);
-
+            enemyManager.update(levelManager.getCurrentLevel().getLevelData());
             checkCloseToBorder();
+            if (drawShip)
+                updateShipAni();
         }
+    }
+
+
+    private void updateShipAni() {
+        shipTick++;
+        if (shipTick >= 35) {
+            shipTick = 0;
+            shipAni++;
+            if (shipAni >= 4)
+                shipAni = 0;
+        }
+
+        shipHeightDelta += shipHeightChange * shipDir;
+        shipHeightDelta = Math.max(Math.min(10 * Game.SCALE, shipHeightDelta), 0);
+
+        if (shipHeightDelta == 0)
+            shipDir = 1;
+        else if (shipHeightDelta == 10 * Game.SCALE)
+            shipDir = -1;
+
+    }
+
+    private void updateDialogue() {
+        for (DialogueEffect de : dialogEffects)
+            if (de.isActive())
+                de.update();
+    }
+
+    private void drawDialogue(Graphics g, int xLvlOffset) {
+        for (DialogueEffect de : dialogEffects)
+            if (de.isActive()) {
+                if (de.getType() == QUESTION)
+                    g.drawImage(questionImgs[de.getAniIndex()], de.getX() - xLvlOffset, de.getY(), DIALOGUE_WIDTH, DIALOGUE_HEIGHT, null);
+                else
+                    g.drawImage(exclamationImgs[de.getAniIndex()], de.getX() - xLvlOffset, de.getY(), DIALOGUE_WIDTH, DIALOGUE_HEIGHT, null);
+            }
+    }
+
+    public void addDialogue(int x, int y, int type) {
+        // Not adding a new one, we are recycling. #ThinkGreen lol
+        dialogEffects.add(new DialogueEffect(x, y - (int) (Game.SCALE * 15), type));
+        for (DialogueEffect de : dialogEffects)
+            if (!de.isActive())
+                if (de.getType() == type) {
+                    de.reset(x, -(int) (Game.SCALE * 15));
+                    return;
+                }
     }
 
     /**
@@ -140,10 +237,7 @@ public class Playing extends State implements Statemethods {
         else if (diff < leftBorder)
             xLvlOffset += diff - leftBorder;
 
-        if (xLvlOffset > maxLvlOffsetX)
-            xLvlOffset = maxLvlOffsetX;
-        else if (xLvlOffset < 0)
-            xLvlOffset = 0;
+        xLvlOffset = Math.max(Math.min(xLvlOffset, maxLvlOffsetX), 0);
 
     }
 
@@ -156,12 +250,18 @@ public class Playing extends State implements Statemethods {
         g.drawImage(backgroundImg, 0, 0, Game.GAME_WIDTH, Game.GAME_HEIGHT, null);
 
         drawClouds(g);
+        if (drawRain)
+            rain.draw(g, xLvlOffset);
+
+        if (drawShip)
+            g.drawImage(shipImgs[shipAni], (int) (100 * Game.SCALE) - xLvlOffset, (int) ((288 * Game.SCALE) + shipHeightDelta), (int) (78 * Game.SCALE), (int) (72 * Game.SCALE), null);
 
         levelManager.draw(g, xLvlOffset);
-        player.render(g, xLvlOffset);
-        enemyManager.draw(g, xLvlOffset);
         objectManager.draw(g, xLvlOffset);
-
+        enemyManager.draw(g, xLvlOffset);
+        player.render(g, xLvlOffset);
+        objectManager.drawBackgroundTrees(g, xLvlOffset);
+        drawDialogue(g, xLvlOffset);
 
         if (paused) {
             g.setColor(new Color(0, 0, 0, 150));
@@ -192,14 +292,23 @@ public class Playing extends State implements Statemethods {
         paused = false;
         lvlCompleted = false;
         playerDying = false;
+        drawRain = false;
+        setDrawRainBoolean();
         player.resetAll();
         enemyManager.resetAllEnemies();
         objectManager.resetAllObjects();
+        drawRain = false;
+        dialogEffects.clear();
 
     }
 
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
+    }
+//metodo para que llueva el 20% al cargar el nivel
+    private void setDrawRainBoolean() {
+        if (rnd.nextFloat() >= 0.8f)
+            drawRain = true;
     }
 
     public void checkObjectHit(Rectangle2D.Float attackBox) {

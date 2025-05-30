@@ -5,6 +5,9 @@ import main.Game;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+import static utilz.Constants.Directions.*;
+import static utilz.HelpMethods.CanMoveHere;
+
 /** Esta clase sirve como un modelo para nuestras entidades
  * les asigna psoicion y tamaño
  * Puede tener clases derivadas que hereden su estructura
@@ -24,6 +27,10 @@ public abstract class Entity {
 
     protected float walkSpeed = 1.0f * Game.SCALE;
 
+    protected int pushBackDir;
+    protected float pushDrawOffset;
+    protected int pushBackOffsetDir = UP;
+
 
 
     /** Constructor
@@ -34,6 +41,33 @@ public abstract class Entity {
         this.width = width;
         this.height = height;
     }
+
+    protected void updatePushBackDrawOffset() {
+        float speed = 0.95f;
+        float limit = -30f;
+
+        if (pushBackOffsetDir == UP) {
+            pushDrawOffset -= speed;
+            if (pushDrawOffset <= limit)
+                pushBackOffsetDir = DOWN;
+        } else {
+            pushDrawOffset += speed;
+            if (pushDrawOffset >= 0)
+                pushDrawOffset = 0;
+        }
+    }
+
+    protected void pushBack(int pushBackDir, int[][] lvlData, float speedMulti) {
+        float xSpeed = 0;
+        if (pushBackDir == LEFT)
+            xSpeed = -walkSpeed;
+        else
+            xSpeed = walkSpeed;
+
+        if (CanMoveHere(hitbox.x + xSpeed * speedMulti, hitbox.y, hitbox.width, hitbox.height, lvlData))
+            hitbox.x += xSpeed * speedMulti;
+    }
+
 
     protected void drawAttackBox(Graphics g, int xLvlOffset){
         g.setColor(Color.RED);
@@ -47,7 +81,7 @@ public abstract class Entity {
     /** Este metodo lo usaremos para iniciar un hitbox como un rectangulo
      */
     protected void initHitbox( int width, int height) {
-        hitbox = new Rectangle2D.Float(x, y, (int)width * Game.SCALE, (int)height * Game.SCALE);
+        hitbox = new Rectangle2D.Float(x, y, (int) (width * Game.SCALE), (int) (height * Game.SCALE));
     }
     /** Este metodo se usa para actualizar la posicion de la hitbox para que coincida con el objeto
      */
@@ -61,12 +95,19 @@ public abstract class Entity {
         return hitbox;
     }
 
-    public int getEnemyState(){
+    public int getState() {
         return state;
+
+    }
+    public int getAniIndex() {
+        return aniIndex;
     }
 
-    public int getAniIndex(){
-        return aniIndex;
+
+    protected void newState(int state) {
+        this.state = state;
+        aniTick = 0;
+        aniIndex = 0;
     }
 
 
